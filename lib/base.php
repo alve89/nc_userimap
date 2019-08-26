@@ -47,10 +47,17 @@ abstract class Base extends \OC\User\Backend {
 	 * @return bool
 	 */
 	public function deleteUser($uid) {
+		/*
 		OC_DB::executeAudited(
 			'DELETE FROM `*PREFIX*users_external` WHERE `uid` = ? AND `backend` = ?',
 			array($uid, $this->backend)
 		);
+		*/
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->delete('users_external')
+			->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
+			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
+		$query->execute();
 		return true;
 	}
 
@@ -62,6 +69,23 @@ abstract class Base extends \OC\User\Backend {
 	 * @return string display name
 	 */
 	public function getDisplayName($uid) {
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->select('displayname')
+			->from('users_external')
+			->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
+			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
+		$result = $query->execute();
+		$user = $result->fetch();
+		$result->closeCursor();
+
+		$displayName = trim($user['displayname'], ' ');
+		if (!empty($displayName)) {
+			return $displayName;
+		} else {
+			return $uid;
+		}
+		
+		/*
 		$user = OC_DB::executeAudited(
 			'SELECT `displayname` FROM `*PREFIX*users_external`'
 			. ' WHERE `uid` = ? AND `backend` = ?',
@@ -73,6 +97,7 @@ abstract class Base extends \OC\User\Backend {
 		} else {
 			return $uid;
 		}
+		*/
 	}
 
 	/**
@@ -81,6 +106,32 @@ abstract class Base extends \OC\User\Backend {
 	 * @return array with all displayNames (value) and the corresponding uids (key)
 	 */
 	public function getDisplayNames($search = '', $limit = null, $offset = null) {
+
+		$connection = \OC::$server->getDatabaseConnection();
+		$query = $connection->getQueryBuilder();
+		$query->select('uid', 'displayname')
+			->from('users_external')
+			->where($query->expr()->iLike('displayname', $query->createNamedParameter('%' . $connection->escapeLikeParameter($search) . '%')))
+			->orWhere($query->expr()->iLike('uid', $query->createNamedParameter('%' . $connection->escapeLikeParameter($search) . '%')))
+			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
+		if ($limit) {
+			$query->setMaxResults($limit);
+		}
+		if ($offset) {
+			$query->setFirstResult($offset);
+		}
+		$result = $query->execute();
+
+		$displayNames = [];
+		while ($row = $result->fetch()) {
+			$displayNames[$row['uid']] = $row['displayname'];
+		}
+		$result->closeCursor();
+
+		return $displayNames;
+		
+		/*
+		
 		$result = OC_DB::executeAudited(
 			array(
 				'sql' => 'SELECT `uid`, `displayname` FROM `*PREFIX*users_external`'
@@ -98,6 +149,7 @@ abstract class Base extends \OC\User\Backend {
 		}
 
 		return $displayNames;
+		*/
 	}
 
 	/**
@@ -106,6 +158,29 @@ abstract class Base extends \OC\User\Backend {
 	* @return array with all uids
 	*/
 	public function getUsers($search = '', $limit = null, $offset = null) {
+		$connection = \OC::$server->getDatabaseConnection();
+		$query = $connection->getQueryBuilder();
+		$query->select('uid')
+			->from('users_external')
+			->where($query->expr()->iLike('uid', $query->createNamedParameter($connection->escapeLikeParameter($search) . '%')))
+			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
+		if ($limit) {
+			$query->setMaxResults($limit);
+		}
+		if ($offset) {
+			$query->setFirstResult($offset);
+		}
+		$result = $query->execute();
+
+		$users = [];
+		while ($row = $result->fetch()) {
+			$users[] = $row['uid'];
+		}
+		$result->closeCursor();
+
+		return $users;
+		
+		/*
 		$result = OC_DB::executeAudited(
 			array(
 				'sql' => 'SELECT `uid` FROM `*PREFIX*users_external`'
@@ -119,7 +194,7 @@ abstract class Base extends \OC\User\Backend {
 		while ($row = $result->fetchRow()) {
 			$users[] = $row['uid'];
 		}
-		return $users;
+		*/
 	}
 
 	/**
@@ -140,6 +215,20 @@ abstract class Base extends \OC\User\Backend {
 	 * @return true/false
 	 */
 	public function setDisplayName() {
+		if (!$this->userExists($uid)) {
+			return false;
+		}
+
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->update('users_external')
+			->set('displayname', $query->createNamedParameter($displayName))
+			->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
+			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
+		$query->execute();
+
+		return true;
+		
+		/*
 		if (!$this->userExists($this->uid)) {
 			return false;
 		}
@@ -149,6 +238,7 @@ abstract class Base extends \OC\User\Backend {
 			array($this->displayName, $this->uid, $this->backend)
 		);
 		return true;
+		*/
 	}
 
 	/**
@@ -158,18 +248,34 @@ abstract class Base extends \OC\User\Backend {
 	 *
 	 * @return void
 	 */
-	protected function storeUser($uid)
+	protected function storeUser($uid, $groups = [])
 	{
 		if (!$this->userExists($this->uid))
 		{
-
+			/*
 			// store user in database
 			OC_DB::executeAudited(
 				'INSERT INTO `*PREFIX*users_external` ( `uid`, `backend` )'
 				. ' VALUES( ?, ? )',
 				array($uid, $this->backend)
 			);
-					
+			*/
+			if(!$this->userExists($uid)) {
+				$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+				$query->insert('users_external')
+					->values([
+						'uid' => $query->createNamedParameter($uid),
+						'backend' => $query->createNamedParameter($this->backend),
+						]);
+				$query->execute();
+
+				if ($groups) {
+					$createduser = \OC::$server->getUserManager()->get($uid);
+					foreach ($groups as $group) {
+						\OC::$server->getGroupManager()->createGroup($group)->addUser($createduser);
+					}
+				}
+			}
 			
 			$p = new \stdClass;
 			$p->appid	= 'core';
@@ -414,12 +520,27 @@ abstract class Base extends \OC\User\Backend {
 	 * @return boolean
 	 */
 	public function userExists($uid) {
+		
+		$connection = \OC::$server->getDatabaseConnection();
+		$query = $connection->getQueryBuilder();
+		$query->select($query->func()->count('*', 'num_users'))
+			->from('users_external')
+			->where($query->expr()->iLike('uid', $query->createNamedParameter($connection->escapeLikeParameter($uid))))
+			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
+		$result = $query->execute();
+		$users = $result->fetchColumn();
+		$result->closeCursor();
+
+		return $users > 0;
+		
+		/*
 		$result = OC_DB::executeAudited(
 			'SELECT COUNT(*) FROM `*PREFIX*users_external`'
 			. ' WHERE LOWER(`uid`) = LOWER(?) AND `backend` = ?',
 			array($uid, $this->backend)
 		);
 		return $result->fetchOne() > 0;
+		*/
 	}
 	
 	
@@ -432,11 +553,24 @@ abstract class Base extends \OC\User\Backend {
 	 * @return boolean
 	 */
 	public function groupExists($gid) {
+		$connection = \OC::$server->getDatabaseConnection();
+		$query = $connection->getQueryBuilder();
+		$query->select($query->func()->count('*', 'num_groups'))
+			->from('groups')
+			->where($query->expr()->iLike('gid', $query->createNamedParameter($connection->escapeLikeParameter($gid))));
+		$result = $query->execute();
+		$users = $result->fetchColumn();
+		$result->closeCursor();
+
+		/*
+		return $users > 0;
 		$result = OC_DB::executeAudited(
 			'SELECT COUNT(*) FROM `*PREFIX*groups`'
 			. ' WHERE LOWER(`gid`) = LOWER(?)',
 			array($gid)
 		);
+		*/
+		
 		return $result->fetchOne() > 0;
 	}
 	
@@ -457,11 +591,24 @@ abstract class Base extends \OC\User\Backend {
 	
 	private function setPreference($appid, $configkey, $configvalue)
 	{
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->insert('preferences')
+			->values([
+				'userid' => $query->createNamedParameter($this->uid),
+				'appid' => $query->createNamedParameter($appid),
+				'configkey' => $query->createNamedParameter($configkey),
+				'configvalue' => $query->createNamedParameter($configvalue),
+			]);
+		$query->execute();
+		
+		return true;
+		
+		/*
 		OC_DB::executeAudited(
 			'INSERT INTO `*PREFIX*preferences` ( `userid`, `appid`, `configkey`, `configvalue`)'
 			. ' VALUES( ?, ?, ?, ?)',
-			array($this->uid, $appid, $configkey, $configvalue)
-		);	
+			array(, $appid, $configkey, $configvalue)
+		);	*/
 	}
 	
 	
