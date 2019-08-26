@@ -1,0 +1,15 @@
+{
+    "name": "User I M A P",
+    "description": "Anmeldung über IMAP-Server",
+    "type": "project",
+    "license": "AGPL",
+    "authors": [
+        {
+            "name": "Stefan Herzog"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^5.4"
+    }
+}

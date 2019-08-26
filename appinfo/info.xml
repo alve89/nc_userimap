@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>userimap</id>
+    <name>User I M A P</name>
+    <summary>Anmeldung über IMAP-Server</summary>
+    <description><![CDATA[Mit Hilfe dieser App können sich Benutzer an einem vordefinierten IMAP-Server authentifizieren, um sich bei Nextcloud anzumelden.]]></description>
+    <version>0.0.1</version>
+    <licence>agpl</licence>
+    <author mail="nextcloud@devel.stefan-herzog.com" homepage="https://devel.stefan-herzog.com">Stefan Herzog</author>
+    <namespace>UserIMAP</namespace>
+    <category>integration</category>
+    <category>security</category>
+    <bugs>http://bugtrack.dplmnt.stefan-herzog.com</bugs>
+    <dependencies>
+        <nextcloud min-version="15" max-version="15"/>
+    </dependencies>
+    <navigations>
+        <navigation>
+            <name>User I M A P</name>
+            <route>userimap.page.index</route>
+        </navigation>
+    </navigations>
+</info>
