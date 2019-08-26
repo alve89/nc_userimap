@@ -1,4 +1,4 @@
-# User I M A P
+# UserIMAP
 Place this app in **nextcloud/apps/**
 
 ## Building the app
