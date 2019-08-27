@@ -1,2 +1,2 @@
 # UserIMAP
-Place this app in **nextcloud/apps/**
+Place this app in /nextcloud**/apps/**
