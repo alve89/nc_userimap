@@ -6,7 +6,7 @@
  * See the COPYING-README file.
  */
 namespace OCA\userimap;
-use \OC_DB;
+//use \OC_DB;
 //use OCP\Security\ICrypto;
 
 /**
@@ -36,6 +36,8 @@ abstract class Base extends \OC\User\Backend {
 	public function __construct($backend) {
 		$this->backend = $backend;
 		$this->crypto = \OC::$server->getCrypto();
+		$this->app = new \OCP\AppFramework\App('userimap');
+		$this->config = \OC::$server->getConfig();
 
 	}
 
@@ -84,7 +86,7 @@ abstract class Base extends \OC\User\Backend {
 		} else {
 			return $uid;
 		}
-		
+
 		/*
 		$user = OC_DB::executeAudited(
 			'SELECT `displayname` FROM `*PREFIX*users_external`'
@@ -129,9 +131,9 @@ abstract class Base extends \OC\User\Backend {
 		$result->closeCursor();
 
 		return $displayNames;
-		
+
 		/*
-		
+
 		$result = OC_DB::executeAudited(
 			array(
 				'sql' => 'SELECT `uid`, `displayname` FROM `*PREFIX*users_external`'
@@ -179,7 +181,7 @@ abstract class Base extends \OC\User\Backend {
 		$result->closeCursor();
 
 		return $users;
-		
+
 		/*
 		$result = OC_DB::executeAudited(
 			array(
@@ -227,7 +229,7 @@ abstract class Base extends \OC\User\Backend {
 		$query->execute();
 
 		return true;
-		
+
 		/*
 		if (!$this->userExists($this->uid)) {
 			return false;
@@ -276,7 +278,7 @@ abstract class Base extends \OC\User\Backend {
 					}
 				}
 			}
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'core';
 			$p->ck		= 'lang';
@@ -286,75 +288,75 @@ abstract class Base extends \OC\User\Backend {
 			$p = new \stdClass;
 			$p->appid	= 'settings';
 			$p->ck		= 'email';
-			$p->cv		= $this->uid . '@' . \OCP\Config::getSystemValue('imap_host');
+			$p->cv		= $this->uid . '@' . $this->config->getSystemValue('imap_host');
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_comments';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_file_changed';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_file_created';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_file_deleted';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_restored';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_public_links';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_remote_share';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_shared';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_email_systemtags';
 			$p->cv		= '0';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_setting_batchtime';
 			$p->cv		= '3600';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_setting_self';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_setting_selfemail';
@@ -366,95 +368,124 @@ abstract class Base extends \OC\User\Backend {
 			$p->ck		= 'notify_stream_comments';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_file_changed';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_file_created';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_file_deleted';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_restored';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_public_links';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_remote_share';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_shared';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
+
 			$p = new \stdClass;
 			$p->appid	= 'activity';
 			$p->ck		= 'notify_stream_systemtags';
 			$p->cv		= '1';
 			$preferences[] = $p;
-			
 
-			
+
+
 			foreach($preferences as $preference)
 			{
 				//$this->setPreference($preference->appid, $preference->ck, $preference->cv);
 				// That's an already existing function from within nextcloud that does the same as the one above
-				\OCP\Config::setUserValue($this->uid, $preference->appid, $preference->ck, $preference->cv);
+				$this->config->setUserValue($this->uid, $preference->appid, $preference->ck, $preference->cv);
 			}
-			\OCP\Config::setUserValue($this->uid, 'rainloop', 'rainloop-autologin-password', $this->pw);		
+			$this->config->setUserValue($this->uid, 'rainloop', 'rainloop-autologin-password', $this->pw);
 
-			
+
 		}
 		return true;
 	}
-	
-	
+
+
 	protected function updateMailAccount()
 	{
+		/*
 		// Remove mail account if it already exists
 		OC_DB::executeAudited(
 			'DELETE FROM `*PREFIX*mail_accounts` WHERE `user_id` = ?',
 			array($this->uid)
-		);
+		);*/
+
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->delete('mail_accounts')
+			->where($query->expr()->eq('user_id', $query->createNamedParameter($this->uid)));
+		$query->execute();
 
 
+		
 		$this->pw = $this->crypto->encrypt($this->pw);
-		OC_DB::executeAudited(
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->insert('mail_accounts')
+			  ->values([
+					'user_id' =>$query->createNamedParameter($this->uid),
+					'name' =>$query->createNamedParameter($this->displayName),
+					'email' => $query->createNamedParameter($this->emailAddress),
+					'inbound_host' => $query->createNamedParameter($this->inHost),
+					'inbound_port' => $query->createNamedParameter($this->inPort),
+					'inbound_ssl_mode' => $query->createNamedParameter($this->inSSL),
+					'inbound_user' => $query->createNamedParameter($this->emailAddress),
+					'inbound_password' => $query->createNamedParameter($this->pw),
+					'outbound_host' => $query->createNamedParameter($this->outHost),
+					'outbound_port' => $query->createNamedParameter($this->outPort),
+					'outbound_ssl_mode' => $query->createNamedParameter($this->outSSL),
+					'outbound_user' => $query->createNamedParameter($this->emailAddress),
+					'outbound_password' => $query->createNamedParameter($this->pw)]);
+		$query->execute();
+		
+
+	
+
+		
+		/*OC_DB::executeAudited(
 			'INSERT INTO `*PREFIX*mail_accounts` ( `user_id`, `name`, `email`, `inbound_host`, `inbound_port`, `inbound_ssl_mode`, `inbound_user`, `inbound_password`, `outbound_host`, `outbound_port`, `outbound_ssl_mode`, `outbound_user`, `outbound_password` )'
 			. ' VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?	)',
 			array($this->uid, $this->displayName, $this->emailAddress, $this->inHost, $this->inPort, $this->inSSL, $this->emailAddress, $this->pw, $this->outHost, $this->outPort, $this->outSSL, $this->emailAddress, $this->pw)
-		);
-		
+		);*/
+
 
 	}
-	
+
 	protected function addUserToGroups()
 	{
 		// Remove user from all groups to prevent duplicated entries and save the actuality of the assignments
 		$this->removeUserFromAllGroups();
-		
+
 		foreach($this->userGroups as $group)
 		{
 			// If group doesn't exist, create group and add user afterwards
@@ -468,40 +499,63 @@ abstract class Base extends \OC\User\Backend {
 			$this->addUserToGroup($group);
 		}
 	}
-	
-	
+
+
 	protected function createNewGroup($group)
 	{
+		/*
 		OC_DB::executeAudited(
 			'INSERT INTO `*PREFIX*groups` ( `gid`)'
 			. ' VALUES( ?)',
 			array($group)
 		);
+		*/
+		
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->insert('groups')
+			  ->values([
+					'gid' =>$query->createNamedParameter($group)]);
+		$query->execute();
 		return true;
 	}
-	
-	
+
+
 	protected function addUserToGroup($group)
 	{
+		/*
 		OC_DB::executeAudited(
 			'INSERT INTO `*PREFIX*group_user` ( `uid`, `gid` )'
 			. ' VALUES( ?, ? )',
 			array($this->uid, $group));
+		*/
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->insert('group_user')
+			  ->values([
+					'uid' =>$query->createNamedParameter($this->uid),
+			  		'gid' =>$query->createNamedParameter($group)]);
+		$query->execute();
 		return true;
 	}
-	
+
 	protected function removeUserFromAllGroups()
 	{
+		/*
 		OC_DB::executeAudited(
 			'DELETE FROM `*PREFIX*group_user` WHERE `uid` = ?',
 			array($this->uid)
 		);
+		*/
+		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
+		$query->delete('group_user')
+			->where($query->expr()->eq('uid', $query->createNamedParameter($this->uid)));
+		$query->execute();
 		return true;
 	}
-		
-	
+
+
 	protected function isUserInGroup($group)
 	{
+		/*
 		$result = OC_DB::executeAudited(
 			'SELECT COUNT(*) FROM `*PREFIX*group_user`'
 			. ' WHERE LOWER(`uid`) = LOWER(?) AND `gid`= ?',
@@ -509,8 +563,21 @@ abstract class Base extends \OC\User\Backend {
 		);
 
 		return $result->fetchOne() > 0;
+		*/
+		
+		$connection = \OC::$server->getDatabaseConnection();
+		$query = $connection->getQueryBuilder();
+		$query->select($query->func()->count('*'))
+			->from('group_user')
+			->where($query->expr()->iLike('uid', $query->createNamedParameter($this->uid)))
+			->andWhere($query->expr()->eq('gid', $query->createNamedParameter($group)));
+		$result = $query->execute();
+		$users = $result->fetchColumn();
+		$result->closeCursor();
+
+		return $users > 0;
 	}
-	
+
 
 	/**
 	 * Check if a user exists
@@ -520,19 +587,19 @@ abstract class Base extends \OC\User\Backend {
 	 * @return boolean
 	 */
 	public function userExists($uid) {
-		
+
 		$connection = \OC::$server->getDatabaseConnection();
 		$query = $connection->getQueryBuilder();
 		$query->select($query->func()->count('*', 'num_users'))
 			->from('users_external')
-			->where($query->expr()->iLike('uid', $query->createNamedParameter($connection->escapeLikeParameter($uid))))
+			->where($query->expr()->eq('uid', $query->createNamedParameter($connection->escapeLikeParameter($uid))))
 			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
 		$result = $query->execute();
 		$users = $result->fetchColumn();
 		$result->closeCursor();
 
 		return $users > 0;
-		
+
 		/*
 		$result = OC_DB::executeAudited(
 			'SELECT COUNT(*) FROM `*PREFIX*users_external`'
@@ -542,9 +609,9 @@ abstract class Base extends \OC\User\Backend {
 		return $result->fetchOne() > 0;
 		*/
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Check if a group exists
 	 *
@@ -555,11 +622,11 @@ abstract class Base extends \OC\User\Backend {
 	public function groupExists($gid) {
 		$connection = \OC::$server->getDatabaseConnection();
 		$query = $connection->getQueryBuilder();
-		$query->select($query->func()->count('*', 'num_groups'))
+		$query->select($query->func()->count('*'))
 			->from('groups')
-			->where($query->expr()->iLike('gid', $query->createNamedParameter($connection->escapeLikeParameter($gid))));
+			->where($query->expr()->eq('gid', $query->createNamedParameter($connection->escapeLikeParameter($gid))));
 		$result = $query->execute();
-		$users = $result->fetchColumn();
+		$groups = $result->fetchColumn();
 		$result->closeCursor();
 
 		/*
@@ -570,15 +637,15 @@ abstract class Base extends \OC\User\Backend {
 			array($gid)
 		);
 		*/
-		
+
 		return $result->fetchOne() > 0;
 	}
-	
-	
-	
+
+
+
 	protected function udServerExists()
 	{
-		if(\OCP\Config::getSystemValue('imap_ud_host') != '' && !is_null(\OCP\Config::getSystemValue('imap_ud_host')))
+		if($this->config->getSystemValue('imap_ud_host') != '' && !is_null($this->config->getSystemValue('imap_ud_host')))
 		{
 			return true;
 		}
@@ -587,8 +654,8 @@ abstract class Base extends \OC\User\Backend {
 			return false;
 		}
 	}
-	
-	
+
+
 	private function setPreference($appid, $configkey, $configvalue)
 	{
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
@@ -600,9 +667,9 @@ abstract class Base extends \OC\User\Backend {
 				'configvalue' => $query->createNamedParameter($configvalue),
 			]);
 		$query->execute();
-		
+
 		return true;
-		
+
 		/*
 		OC_DB::executeAudited(
 			'INSERT INTO `*PREFIX*preferences` ( `userid`, `appid`, `configkey`, `configvalue`)'
@@ -610,39 +677,39 @@ abstract class Base extends \OC\User\Backend {
 			array(, $appid, $configkey, $configvalue)
 		);	*/
 	}
-	
-	
-	
-	
+
+
+
+
 	// Retrieve user data from ud server
 	public function getUserDetails($username)
 	{
-		$ud_host = \OCP\Config::getSystemValue('imap_ud_host');
+		$ud_host = $this->config->getSystemValue('imap_ud_host');
 		if(substr($ud_host, 0, 4) != 'http')
 		{
 			$ud_host = 'http://'.$ud_host;
 		}
-		
+
 		$url = $ud_host.'?uid='.$username;
 
-        // create curl resource 
-        $ch = curl_init(); 
+        // create curl resource
+        $ch = curl_init();
 
-        // set url 
-        curl_setopt($ch, CURLOPT_URL, $url); 
+        // set url
+        curl_setopt($ch, CURLOPT_URL, $url);
 
-        //return the transfer as a string 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+        //return the transfer as a string
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-        // $output contains the output string 
-        $response = curl_exec($ch); 
-        
+        // $output contains the output string
+        $response = curl_exec($ch);
+
         // get status code
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); 
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        // close curl resource to free up system resources 
+        // close curl resource to free up system resources
         curl_close($ch);
-        
+
         if($code != 200)
         {
 	        return false;
@@ -653,6 +720,3 @@ abstract class Base extends \OC\User\Backend {
         }
 	}
 }
-
-
-
