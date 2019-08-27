@@ -6,6 +6,8 @@
  * See the COPYING-README file.
  */
 
+//namespace OCA\userimap;
+
 /**
  * User authentication against an IMAP mail server
  *
@@ -16,7 +18,11 @@
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     http://github.com/owncloud/apps
  */
-class OC_User_IMAP_w_UD extends \OCA\user_imap\Base {
+
+
+
+
+class OC_User_IMAP_wUD extends \OCA\userimap\Base {
 	private $mailbox;
 
 	/**
@@ -28,6 +34,8 @@ class OC_User_IMAP_w_UD extends \OCA\user_imap\Base {
 	public function __construct($mailbox) {
 		parent::__construct($mailbox);
 		$this->mailbox=$mailbox;
+		//$this->app = new \OCP\AppFramework\App('userimap');
+		//$config = \OC::$server->getConfig();
 	}
 
 	/**
@@ -41,22 +49,25 @@ class OC_User_IMAP_w_UD extends \OCA\user_imap\Base {
 	public function checkPassword($uid, $password)
 	{
 		$this->pw = $password;
+		
+		
 		// Check if uid already contains @host.tld and add it if not
-		if(!strstr($uid, '@' . \OCP\Config::getSystemValue('imap_host')))
+		if(!strstr($uid, '@' . $this->config->getSystemValue('imap_host')))
 		{
-			$this->mailHost = \OCP\Config::getSystemValue('imap_host');
+			
+			$this->mailHost = $this->config->getSystemValue('imap_host');
 			$this->emailAddress = trim($uid.'@'.$this->mailHost);
 			$uid = $this->emailAddress;
 			$uid = mb_strtolower($uid);
 		}
-		
-		
-		if (!function_exists('imap_open')) 
+
+		//Check if functionality PHP_IMAP exists
+		if (!function_exists('imap_open'))
 		{
 			OCP\Util::writeLog('user_imap', 'ERROR: PHP imap extension is not installed', OCP\Util::ERROR);
 			return false;
 		}
-		
+
 		// Try to authenticate user against IMAP server
 		$mbox = @imap_open($this->mailbox, $uid, $password, OP_HALFOPEN, 1);
 		imap_errors();
@@ -64,14 +75,14 @@ class OC_User_IMAP_w_UD extends \OCA\user_imap\Base {
 		if($mbox !== FALSE) {
 			imap_close($mbox);
 
-			$this->inHost = \OCP\Config::getSystemValue('imap_inHost');
-			$this->inPort = \OCP\Config::getSystemValue('imap_inPort');
-			$this->inSSL = \OCP\Config::getSystemValue('imap_inSSL');
+			$this->inHost = $this->config->getSystemValue('imap_inHost');
+			$this->inPort = $this->config->getSystemValue('imap_inPort');
+			$this->inSSL = $this->config->getSystemValue('imap_inSSL');
 
-			$this->outHost = \OCP\Config::getSystemValue('imap_outHost');
-			$this->outPort = \OCP\Config::getSystemValue('imap_outPort');
-			$this->outSSL = \OCP\Config::getSystemValue('imap_outSSL');
-			
+			$this->outHost = $this->config->getSystemValue('imap_outHost');
+			$this->outPort = $this->config->getSystemValue('imap_outPort');
+			$this->outSSL = $this->config->getSystemValue('imap_outSSL');
+
 			// uid is the username given in the login form without @host.tld
 			$this->uid = substr($uid, 0, strpos($uid, '@'));
 
@@ -80,19 +91,19 @@ class OC_User_IMAP_w_UD extends \OCA\user_imap\Base {
 			{
 				// Retrieve user details from identity server
 				$this->userData = $this->getUserDetails($this->uid);
-	
-				// Create display name of the user			
+
+				// Create display name of the user
 				$this->displayName = $this->userData->firstname . ' ' . $this->userData->lastname;
-				
+
 				// Set a new class property for the users groups
 				$this->userGroups = $this->userData->groups;
 			}
-			
+
 			if (!$this->userExists($this->uid))
 			{
 				// Store as new user if it not exists
 				$this->storeUser($this->uid);
-				
+
 				// Check if UD server exists to retrieve user details
 				if($this->udServerExists())
 				{
@@ -100,13 +111,13 @@ class OC_User_IMAP_w_UD extends \OCA\user_imap\Base {
 					$this->setDisplayName();
 				}
 			}
-			
-			// Check if UD server exists to retrieve user details			
+
+			// Check if UD server exists to retrieve user details
 			if($this->udServerExists())
 			{
 				// Remove user from all groups and add it to the retrieved groups
 				$this->addUserToGroups();
-				
+
 				// Update mail account to keep password updated
 				$this->updateMailAccount();
 			}
