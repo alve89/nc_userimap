@@ -1,6 +1,5 @@
 <?php
+OC::$CLASSPATH['OC_User_IMAP_wUD']='userimap/lib/imap.php';
 
-//$app = new \OCA\UserIMAP\AppInfo\Application();
-//$app->register();
-
-OC::$CLASSPATH['OC_User_IMAP_w_UD']='userimap/lib/imap.php';
+//$config = \OC::$server->getConfig();
+//$userSession = \OC::$server->getUserSession();
