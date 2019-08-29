@@ -18,7 +18,7 @@ namespace OCA\userimap;
  * @category Apps
  * @package  UserIMAP
  * @author   Christian Weiske <cweiske@cweiske.de>
- * @author	 Stefan Herzog <devel@stefan-herzog.com>
+ * @author	Stefan Herzog <nextcloud@devel.stefan-herzog.com>
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     http://github.com/owncloud/apps
  */
@@ -252,17 +252,15 @@ abstract class Base extends \OC\User\Backend {
 	 */
 	protected function storeUser($uid, $groups = [])
 	{
+mail('stefan@die-herzogs.com', 'Debug base.php storeUser', json_encode(array('uid'=>$uid, 'this->uid' => $this->uid)));
+exit;
+		
+		
 		if (!$this->userExists($this->uid))
 		{
-			/*
-			// store user in database
-			OC_DB::executeAudited(
-				'INSERT INTO `*PREFIX*users_external` ( `uid`, `backend` )'
-				. ' VALUES( ?, ? )',
-				array($uid, $this->backend)
-			);
-			*/
 			if(!$this->userExists($uid)) {
+				
+
 				$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 				$query->insert('users_external')
 					->values([
@@ -590,7 +588,7 @@ abstract class Base extends \OC\User\Backend {
 
 		$connection = \OC::$server->getDatabaseConnection();
 		$query = $connection->getQueryBuilder();
-		$query->select($query->func()->count('*', 'num_users'))
+		$query->select($query->func()->count('*')) //, 'num_users'))
 			->from('users_external')
 			->where($query->expr()->eq('uid', $query->createNamedParameter($connection->escapeLikeParameter($uid))))
 			->andWhere($query->expr()->eq('backend', $query->createNamedParameter($this->backend)));
@@ -598,16 +596,11 @@ abstract class Base extends \OC\User\Backend {
 		$users = $result->fetchColumn();
 		$result->closeCursor();
 
+//mail('stefan@die-herzogs.com', 'Debug base.php userExists ohne num_users', json_encode(array('uid'=>$uid, 'userExists' => $users > 0)));
+//exit;
+		
+		// Returns a boolean value if the users exists or not
 		return $users > 0;
-
-		/*
-		$result = OC_DB::executeAudited(
-			'SELECT COUNT(*) FROM `*PREFIX*users_external`'
-			. ' WHERE LOWER(`uid`) = LOWER(?) AND `backend` = ?',
-			array($uid, $this->backend)
-		);
-		return $result->fetchOne() > 0;
-		*/
 	}
 
 
@@ -620,6 +613,7 @@ abstract class Base extends \OC\User\Backend {
 	 * @return boolean
 	 */
 	public function groupExists($gid) {
+		/*
 		$connection = \OC::$server->getDatabaseConnection();
 		$query = $connection->getQueryBuilder();
 		$query->select($query->func()->count('*'))
@@ -628,7 +622,20 @@ abstract class Base extends \OC\User\Backend {
 		$result = $query->execute();
 		$groups = $result->fetchColumn();
 		$result->closeCursor();
+		*/
 
+		$connection = \OC::$server->getDatabaseConnection();
+		$query = $connection->getQueryBuilder();
+		$query->select($query->func()->count('*')) //, 'num_users'))
+			->from('groups')
+			->where($query->expr()->eq('gid', $query->createNamedParameter($connection->escapeLikeParameter($gid))));
+		$result = $query->execute();
+		$groups = $result->fetchColumn();
+		$result->closeCursor();
+		
+//mail('stefan@die-herzogs.com', 'Debug base.php groupExists ohne num_users', json_encode(array('gid'=>$gid, 'groupExists' => $groups > 0)));
+//exit;	
+		
 		/*
 		return $users > 0;
 		$result = OC_DB::executeAudited(
@@ -638,7 +645,8 @@ abstract class Base extends \OC\User\Backend {
 		);
 		*/
 
-		return $result->fetchOne() > 0;
+		//return $result->fetchOne() > 0;
+		return $groups > 0;
 	}
 
 
@@ -685,9 +693,9 @@ abstract class Base extends \OC\User\Backend {
 	public function getUserDetails($username)
 	{
 		$ud_host = $this->config->getSystemValue('imap_ud_host');
-		if(substr($ud_host, 0, 4) != 'http')
+		if(substr($ud_host, 0, 5) != 'https')
 		{
-			$ud_host = 'http://'.$ud_host;
+			$ud_host = 'https://'.$ud_host;
 		}
 
 		$url = $ud_host.'?uid='.$username;
