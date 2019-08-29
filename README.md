@@ -2,6 +2,8 @@
 Place this app in **/path/to/nextcloud/apps/**
 
 ## Possible settings v0.0.2 (/config/config.php)
+The parameters (like imap_host, imap_inSSL, imap_outPort, ...) are used to auto-fill the tables of [Rainloop app](https://github.com/pierre-alain-b/rainloop-nextcloud).
+
     'imap_host' => 'yourdomain.tld',  
     'imap_inHost' => 'imap.yourdomain.tld',  
     'imap_inPort' => 143,  
