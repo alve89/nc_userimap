@@ -14,7 +14,7 @@
  * @category Apps
  * @package  UserIMAP
  * @author   Robin Appelman <icewind@owncloud.com>
- * @author	 Stefan Herzog <devel@stefan-herzog.com>
+ * @author	 Stefan Herzog <nextcloud@devel.stefan-herzog.com>
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     http://github.com/owncloud/apps
  */
@@ -61,7 +61,7 @@ class OC_User_IMAP_wUD extends \OCA\userimap\Base {
 			$uid = mb_strtolower($uid);
 		}
 
-		//Check if functionality PHP_IMAP exists
+
 		if (!function_exists('imap_open'))
 		{
 			OCP\Util::writeLog('user_imap', 'ERROR: PHP imap extension is not installed', OCP\Util::ERROR);
