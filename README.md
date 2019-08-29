@@ -2,7 +2,7 @@
 Place this app in **/path/to/nextcloud/apps/**
 
 ## Possible settings v0.0.2 (/config/config.php)
-  'imap_host' => 'yourdomain.tld',
+`  'imap_host' => 'yourdomain.tld',
   'imap_inHost' => 'imap.yourdomain.tld',
   'imap_inPort' => 143,
   'imap_inSSL' => 'tls',
@@ -20,4 +20,4 @@ Place this app in **/path/to/nextcloud/apps/**
         0 => '{imap.yourdomain.tld:143}',
       ),
     ),
-  ),
+  ),`
