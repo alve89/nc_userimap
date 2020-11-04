@@ -1,25 +1,52 @@
-# UserIMAP
-Place this app in **/path/to/nextcloud/apps/**
+# User I M A P
+Place this app in **nextcloud/apps/**
 
-## Possible settings v0.0.2 (/config/config.php)
-The parameters (like imap_host, imap_inSSL, imap_outPort, ...) are used to auto-fill the tables of [Rainloop app](https://github.com/pierre-alain-b/rainloop-nextcloud).
+## Building the app
 
-    'imap_host' => 'yourdomain.tld',  
-    'imap_inHost' => 'imap.yourdomain.tld',  
-    'imap_inPort' => 143,  
-    'imap_inSSL' => 'tls',  
-    'imap_outHost' => 'smtp.yourdomain.tld',
-    'imap_outPort' => 587,
-    'imap_outSSL' => 'tls',
-    'imap_ud_host' => 'https://ud.yourdomain.tld', // User Details server that provides additional user details like displayname, groups, ...
-    'user_backends' => 
-        array (
-            0 => 
-                array (
-                    'class' => 'OC_User_IMAP_wUD',
-                    'arguments' => 
-                        array (
-                            0 => '{imap.yourdomain.tld:143}',
-                            ),
-                       ),
-                ),
+The app can be built by using the provided Makefile by running:
+
+    make
+
+This requires the following things to be present:
+* make
+* which
+* tar: for building the archive
+* curl: used if phpunit and composer are not installed to fetch them from the web
+* npm: for building and testing everything JS, only required if a package.json is placed inside the **js/** folder
+
+The make command will install or update Composer dependencies if a composer.json is present and also **npm run build** if a package.json is present in the **js/** folder. The npm **build** script should use local paths for build systems and package managers, so people that simply want to build the app won't need to install npm libraries globally, e.g.:
+
+**package.json**:
+```json
+"scripts": {
+    "test": "node node_modules/gulp-cli/bin/gulp.js karma",
+    "prebuild": "npm install && node_modules/bower/bin/bower install && node_modules/bower/bin/bower update",
+    "build": "node node_modules/gulp-cli/bin/gulp.js"
+}
+```
+
+
+## Publish to App Store
+
+First get an account for the [App Store](http://apps.nextcloud.com/) then run:
+
+    make && make appstore
+
+The archive is located in build/artifacts/appstore and can then be uploaded to the App Store.
+
+## Running tests
+You can use the provided Makefile to run all tests by using:
+
+    make test
+
+This will run the PHP unit and integration tests and if a package.json is present in the **js/** folder will execute **npm run test**
+
+Of course you can also install [PHPUnit](http://phpunit.de/getting-started.html) and use the configurations directly:
+
+    phpunit -c phpunit.xml
+
+or:
+
+    phpunit -c phpunit.integration.xml
+
+for integration tests
