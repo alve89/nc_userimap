@@ -20,21 +20,21 @@ class Application extends App implements IBootstrap {
     }
 
     public function register(IRegistrationContext $context): void {
-        // Services registrieren
-        $context->registerService(UserIMAPService::class, function ($c) {
-            return new UserIMAPService($c->get(IConfig::class));
+        // Services mit korrekter Dependency Injection registrieren
+        $context->registerService(UserIMAPService::class, function ($container) {
+            return new UserIMAPService($container->get(IConfig::class));
         });
 
-        $context->registerService(IMAP::class, function ($c) {
+        $context->registerService(IMAP::class, function ($container) {
             return new IMAP(
-                $c->get(UserIMAPService::class),
-                $c->get(LoggerInterface::class)
+                $container->get(UserIMAPService::class),
+                $container->get(LoggerInterface::class)
             );
         });
     }
 
     public function boot(IBootContext $context): void {
-        // User Backend beim User Manager registrieren
+        // User Backend registrieren - der moderne Weg
         $container = $context->getAppContainer();
         $serverContainer = $context->getServerContainer();
         
@@ -43,9 +43,8 @@ class Application extends App implements IBootstrap {
         
         $userManager->registerBackend($backend);
         
-        // Log für Debugging über Nextcloud-Logger
+        // Success-Log für Monitoring
         $logger = $container->get(LoggerInterface::class);
-        $logger->info('UserIMAP backend registered successfully');
-        $logger->info('UserIMAP boot() completed');
+        $logger->info('UserIMAP backend registered successfully via modern Bootstrap');
     }
 }
