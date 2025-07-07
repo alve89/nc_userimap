@@ -1,132 +1,125 @@
 <?php
-/**
- * Copyright (c) 2012 Robin Appelman <icewind@owncloud.com>
- * This file is licensed under the Affero General Public License version 3 or
- * later.
- * See the COPYING-README file.
- */
+declare(strict_types=1);
 
-//namespace OCA\userimap;
+namespace OCA\UserIMAP;
 
-/**
- * User authentication against an IMAP mail server
- *
- * @category Apps
- * @package  UserIMAP
- * @author   Robin Appelman <icewind@owncloud.com>
- * @author	 Stefan Herzog <nextcloud@devel.stefan-herzog.com>
- * @license  http://www.gnu.org/licenses/agpl AGPL
- * @link     http://github.com/owncloud/apps
- */
+use OCP\UserInterface;
+use OCA\UserIMAP\Service\UserIMAPService;
+use Psr\Log\LoggerInterface;
 
+class IMAP implements UserInterface {
+    private UserIMAPService $imapService;
+    private LoggerInterface $logger;
 
+    public function __construct(UserIMAPService $imapService, LoggerInterface $logger) {
+        $this->imapService = $imapService;
+        $this->logger = $logger;
+    }
 
+    public function checkPassword(string $uid, string $password): string|bool {
+        $this->logger->info('UserIMAP checkPassword called', ['user' => $uid]);
+        
+        if (empty($uid) || empty($password)) {
+            $this->logger->warning('UserIMAP: Empty uid or password');
+            return false;
+        }
 
-class OC_User_IMAP_wUD extends \OCA\userimap\Base {
-	private $mailbox;
+        try {
+            $result = $this->authenticate($uid, $password) ? $uid : false;
+            $this->logger->info('UserIMAP Auth result', [
+                'user' => $uid, 
+                'success' => (bool)$result
+            ]);
+            return $result;
+        } catch (\Exception $e) {
+            $this->logger->error('IMAP Authentication error: ' . $e->getMessage(), [
+                'user' => $uid,
+                'exception' => $e
+            ]);
+            return false;
+        }
+    }
 
-	/**
-	 * Create new IMAP authentication provider
-	 *
-	 * @param string $mailbox PHP imap_open mailbox definition, e.g.
-	 *                        {127.0.0.1:143/imap/readonly}
-	 */
-	public function __construct($mailbox) {
-		parent::__construct($mailbox);
-		$this->mailbox=$mailbox;
-		//$this->app = new \OCP\AppFramework\App('userimap');
-		//$config = \OC::$server->getConfig();
-	}
+    private function authenticate(string $uid, string $password): bool {
+        $connectionString = $this->imapService->getIMAPConnectionString();
+        
+        // KAS-Server benötigen oft die vollständige E-Mail-Adresse
+        $username = $uid;
+        if (!str_contains($uid, '@')) {
+            // Domain aus config.php holen oder Standard setzen
+            $domain = $this->imapService->getEmailDomain();
+            $username = $uid . '@' . $domain;
+        }
+        
+        // Debug-Log
+        $this->logger->info('IMAP Auth attempt', [
+            'original_user' => $uid,
+            'mapped_user' => $username,
+            'connection' => $connectionString
+        ]);
 
-	/**
-	 * Check if the password is correct without logging in the user
-	 *
-	 * @param string $uid      The username
-	 * @param string $password The password
-	 *
-	 * @return true/false
-	 */
-	public function checkPassword($uid, $password)
-	{
-		$this->pw = $password;
-		
-		
-		// Check if uid already contains @host.tld and add it if not
-		if(!strstr($uid, '@' . $this->config->getSystemValue('imap_host')))
-		{
-			
-			$this->mailHost = $this->config->getSystemValue('imap_host');
-			$this->emailAddress = trim($uid.'@'.$this->mailHost);
-			$uid = $this->emailAddress;
-			$uid = mb_strtolower($uid);
-		}
+        $mbox = @imap_open(
+            $connectionString . 'INBOX',
+            $username,  // Verwende mapped username
+            $password,
+            0,
+            1,
+            ['DISABLE_AUTHENTICATOR' => 'GSSAPI']
+        );
 
+        if ($mbox) {
+            imap_close($mbox);
+            $this->logger->info('IMAP Auth successful', ['user' => $uid]);
+            return true;
+        }
 
-		if (!function_exists('imap_open'))
-		{
-			OCP\Util::writeLog('user_imap', 'ERROR: PHP imap extension is not installed', OCP\Util::ERROR);
-			return false;
-		}
+        $error = imap_last_error();
+        $this->logger->warning('IMAP Auth failed', [
+            'user' => $uid,
+            'mapped_user' => $username,
+            'error' => $error
+        ]);
 
-		// Try to authenticate user against IMAP server
-		$mbox = @imap_open($this->mailbox, $uid, $password, OP_HALFOPEN, 1);
-		imap_errors();
-		imap_alerts();
-		if($mbox !== FALSE) {
-			imap_close($mbox);
+        return false;
+    }
 
-			$this->inHost = $this->config->getSystemValue('imap_inHost');
-			$this->inPort = $this->config->getSystemValue('imap_inPort');
-			$this->inSSL = $this->config->getSystemValue('imap_inSSL');
+    public function userExists($uid): bool {
+        return true; // IMAP-Nutzer existieren extern
+    }
 
-			$this->outHost = $this->config->getSystemValue('imap_outHost');
-			$this->outPort = $this->config->getSystemValue('imap_outPort');
-			$this->outSSL = $this->config->getSystemValue('imap_outSSL');
+    public function getHome($uid): ?string {
+        return null;
+    }
 
-			// uid is the username given in the login form without @host.tld
-			$this->uid = substr($uid, 0, strpos($uid, '@'));
+    public function getDisplayName($uid): string {
+        return $uid;
+    }
 
-			// Check if UD server exists to retrieve user details
-			if($this->udServerExists())
-			{
-				// Retrieve user details from identity server
-				$this->userData = $this->getUserDetails($this->uid);
+    public function deleteUser($uid): bool {
+        return false;
+    }
 
-				// Create display name of the user
-				$this->displayName = $this->userData->firstname . ' ' . $this->userData->lastname;
+    public function setDisplayName($uid, $displayName): bool {
+        return false;
+    }
 
-				// Set a new class property for the users groups
-				$this->userGroups = $this->userData->groups;
-			}
+    public function getDisplayNames($search = '', $limit = null, $offset = null): array {
+        return [];
+    }
 
-			if (!$this->userExists($this->uid))
-			{
-				// Store as new user if it not exists
-				$this->storeUser($this->uid);
+    public function countUsers(): int {
+        return 0;
+    }
 
-				// Check if UD server exists to retrieve user details
-				if($this->udServerExists())
-				{
-					// Set displayed name of user
-					$this->setDisplayName();
-				}
-			}
+    public function getUsers($search = '', $limit = null, $offset = null): array {
+        return [];
+    }
 
-			// Check if UD server exists to retrieve user details
-			if($this->udServerExists())
-			{
-				// Remove user from all groups and add it to the retrieved groups
-				$this->addUserToGroups();
+    public function hasUserListings(): bool {
+        return false;
+    }
 
-				// Update mail account to keep password updated
-				$this->updateMailAccount();
-			}
-
-			return $this->uid;
-		}
-		else
-		{
-			return false;
-		}
-	}
+    public function implementsActions($actions): bool {
+        return ($actions & \OC\User\Backend::CHECK_PASSWORD) === \OC\User\Backend::CHECK_PASSWORD;
+    }
 }
