@@ -17,7 +17,7 @@
     <category>security</category>
     <bugs>http://bugtrack.dplmnt.stefan-herzog.com</bugs>
     <dependencies>
-        <nextcloud min-version="25" max-version="33"/>
-        <php min-version="8.0" max-version="8.4"/>
+        <nextcloud min-version="25" max-version="32"/>
+        <php min-version="8.0" max-version="8.3"/>
     </dependencies>
 </info>
