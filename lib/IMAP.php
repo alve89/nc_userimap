@@ -136,6 +136,8 @@ class IMAP implements UserInterface, IProvideEnabledStateBackend  {
 	 * IProvideEnabledStateBackend
 	 */
 	public function isUserEnabled(string $uid, callable $queryDatabaseValue): bool {
+         $this->logger->info("userIMAP: isUserEnabled()");
+         
 		// Wenn du "Login => enabled" per checkPassword() setzt, reicht hier die DB-Abfrage:
 		return $queryDatabaseValue();
 
