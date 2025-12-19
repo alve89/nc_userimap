@@ -14,6 +14,7 @@ use OCP\User\Backend\IProvideEnabledStateBackend;
 class IMAP implements UserInterface, IProvideEnabledStateBackend  {
     private UserIMAPService $imapService;
     private LoggerInterface $logger;
+    private IConfig $config;
 
     public function __construct(UserIMAPService $imapService, LoggerInterface $logger) {
         $this->imapService = $imapService;
