@@ -6,14 +6,21 @@ namespace OCA\UserIMAP;
 use OCP\UserInterface;
 use OCA\UserIMAP\Service\UserIMAPService;
 use Psr\Log\LoggerInterface;
+use OCP\User\Backend\IProvideEnabledStateBackend;
+use OCP\IConfig;
 
-class IMAP implements UserInterface {
+
+
+class IMAP implements UserInterface, IProvideEnabledStateBackend  {
     private UserIMAPService $imapService;
     private LoggerInterface $logger;
+    private IConfig $config;
+
 
     public function __construct(UserIMAPService $imapService, LoggerInterface $logger) {
         $this->imapService = $imapService;
         $this->logger = $logger;
+        $this->config = \OC::$server->get(IConfig::class);
     }
 
     public function checkPassword(string $uid, string $password): string|bool {
@@ -25,17 +32,14 @@ class IMAP implements UserInterface {
         }
 
         try {
-            $result = $this->authenticate($uid, $password) ? $uid : false;
-            $this->logger->info('UserIMAP Auth result', [
-                'user' => $uid, 
-                'success' => (bool)$result
-            ]);
-            return $result;
-        } catch (\Exception $e) {
-            $this->logger->error('IMAP Authentication error: ' . $e->getMessage(), [
-                'user' => $uid,
-                'exception' => $e
-            ]);
+            $ok = $this->authenticate($uid, $password);
+            if ($ok) {
+                $this->config->setUserValue($uid, 'core', 'enabled', 'true');
+                return $uid;
+            }
+            return false;
+        } catch (\Throwable $e) {
+            $this->logger->error('IMAP Authentication error: ' . $e->getMessage(), ['user' => $uid]);
             return false;
         }
     }
@@ -52,11 +56,11 @@ class IMAP implements UserInterface {
         }
         
         // Debug-Log
-        $this->logger->info('IMAP Auth attempt', [
-            'original_user' => $uid,
-            'mapped_user' => $username,
-            'connection' => $connectionString
-        ]);
+        // $this->logger->info('IMAP Auth attempt', [
+        //     'original_user' => $uid,
+        //     'mapped_user' => $username,
+        //     'connection' => $connectionString
+        // ]);
 
         $mbox = @imap_open(
             $connectionString . 'INBOX',
@@ -69,7 +73,13 @@ class IMAP implements UserInterface {
 
         if ($mbox) {
             imap_close($mbox);
-            $this->logger->info('IMAP Auth successful', ['user' => $uid]);
+            // $this->logger->info('IMAP Auth successful', ['user' => $uid]);
+            // $this->setUserEnabled($uid, true);
+            // setUserEnabled(
+            //         string $uid,
+            //         bool $enabled,
+            //         callable $queryDatabaseValue,
+            //         callable $setDatabaseValue
             return true;
         }
 
@@ -122,4 +132,29 @@ class IMAP implements UserInterface {
     public function implementsActions($actions): bool {
         return ($actions & \OC\User\Backend::CHECK_PASSWORD) === \OC\User\Backend::CHECK_PASSWORD;
     }
+
+    
+    public function isUserEnabled(string $uid, callable $queryDatabaseValue): bool {
+        $this->logger->warning('UserIMAP: isUserEnabled');
+
+        return true;
+    }
+
+    public function setUserEnabled(
+        string $uid,
+        bool $enabled,
+        callable $queryDatabaseValue,
+        callable $setDatabaseValue
+    ): bool {
+        // Ignore enable/disable requests – IMAP backend has no local state
+        $this->logger->warning('UserIMAP: setUserEnabled: '. $enabled);
+        return true;
+    }
+
+    public function getDisabledUserList(?int $limit = null, int $offset = 0, string $search = ''): array {
+        return [];
+    }
+
+
 }
+

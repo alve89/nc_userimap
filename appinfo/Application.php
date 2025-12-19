@@ -45,6 +45,6 @@ class Application extends App implements IBootstrap {
         
         // Success-Log für Monitoring
         $logger = $container->get(LoggerInterface::class);
-        $logger->info('UserIMAP backend registered successfully via modern Bootstrap');
+        // $logger->info('UserIMAP backend registered successfully via modern Bootstrap');
     }
 }
